@@ -1,10 +1,20 @@
 # Action 名稱
-name: Deploy
+name: Deploy to GitHub Pages
 # 觸發時機，當推送到分支 master 時
 on:
   push:
     branches: [ master ]
+  workflow_dispatch:
 # 執行的工作
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   # 工作名稱
   deploy:
@@ -13,17 +23,21 @@ jobs:
     # 工作步驟
     steps:
       # 步驟一：複製程式碼
-      - name: checkout
+      - name: Checkout
         # 使用的 actions/checkout 複製程式碼
         uses: actions/checkout@v5
       # 步驟二：編譯
       - name: Install and Build
         run: |
-          npm install
+          npm ci
           npm run build
-      # 步驟三：部署
-      - name: Deploy
-        uses: JamesIves/github-pages-deploy-action@v4
+      # 步驟三：部署到 GitHub Pages
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          branch: gh-pages
-          folder: dist
+          path: dist
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
